@@ -1,0 +1,5 @@
+- hosts: target_servers
+  tasks:
+  - name: Test Task
+    file: path=/home/ansible/tolya_genii state=touch owner=ansible group=ansible mode=0600
+
