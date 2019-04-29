@@ -1,0 +1,87 @@
+Поиск и сортировка файлов в указанной папке + по убыванию в мб
+
+	find <DIR> -mount -type f -ls 2> /dev/null | sort -rnk7 | head -10 | awk '{printf "%10d MB\t%s\n",($7/1024)/1024,$NF}'
+ 
+	ls -lSrh
+
+	find . -name '*2015*' -type f -mtime +30 | xargs rm -f
+
+сколько каждая папка / файл потребляет дискового пространства:
+   
+	du -smc --exclude={proc,sys,dev} ./* | sort -g
+
+The ‘dmesg‘ command displays containers which has resource shortages.
+
+	dmesg|egrep -v '(SMTP-LOG|INPUT-DROP|LIMIT-PPS-DROP|FORWARD-DROP)'
+
+Clean SWAP and release RAM:
+
+	<command> | curl --data-urlencode @- "https://devme.win/"
+
+	echo 3 > /proc/sys/vm/drop_caches
+
+	echo 10 > /proc/sys/vm/swappiness
+	
+	sysctl -w vm.swappiness=10
+
+Troubleshooting CPU:
+
+	ps uax|grep jem|wc -l
+	
+	kill $(ps axuwww | grep -E '[/]jem' | awk '{print $2}')
+	
+Check firewall rules and tricks:
+
+	iptables -L -n -tnat
+
+	iptables -L -n
+	
+Flush all existing rules:
+
+	iptables -F; iptables -X; iptables -Z
+
+Открытость портов nmapom:
+
+	nmap -Pn -p 53 89.218.31.199
+
+	netstat -nlp
+
+the public IP address:
+
+	wget http://ipinfo.io/ip -qO -
+	
+	sed –i 's/172.16.10.43/10.10.10.15/' /etc/hosts
+	
+	ex -sc '8i|include /etc/nginx/default.d/secure-wp.conf;' -cx /etc/nginx/conf.d/topgame-casino.com.conf
+
+Benchmark VPS:
+
+	wget freevps.us/downloads/bench.sh -O - -o /dev/null|bash
+	
+Архивация+распаковка и передача данных:
+
+	scp -v *.tar qwzx@gmx.it@scp.adrive.com:
+
+	ftp://qwzx@gmx.it:Q1w2e3r4@ftp.adrive.com
+
+	python -m SimpleHTTPServer [port]
+
+	tar -xzvf *.tar.gz
+
+	zip -r myarch.zip mydir/*
+
+Find-where-inodes-are-being-used:
+
+	find / -xdev -printf '%h\n' | sort | uniq -c | sort -k 1 -n
+
+	iostat -d 1 2 -x -k
+	
+	 pagekite.py 192.168.1.1:2222 ssh://leozth.pagekite.me AND 80 leozth.pagekite.me:8080
+	 
+	 pagekite.py --insecure ssh://leozth.pagekite.me AND 80 leozth.pagekite.me
+
+	 
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+docker rmi $(docker images -f dangling=true -q)
+docker rmi $(docker images -a -q) --force
