@@ -1,0 +1,179 @@
+# ------------------------------------
+# Docker alias and function
+# ------------------------------------
+
+function doc.list() {
+  echo "----------------------------------------------------"
+  echo dc - Docker-compose abbreviation
+  echo dcup - Docker-compose create and start containers
+  echo dcupd - create and start containers in background
+  echo "----------------------------------------------------"
+  echo dl - Get latest container ID
+  echo di - Get docker images
+  echo dcs - Get container process
+  echo dca - Get process included stop container
+  echo dcip - Get ip of container
+  echo dcips - Get docker ps with ips
+  echo doins - inspect last container created  
+  echo dbash - Bash into running container by Name
+  echo "----------------------------------------------------"
+  echo dgrep - search info by Name
+  echo dgrepr - search info by Name in runiing containers
+  echo digrep - search image id by Name
+  echo "-----------------------------------------------------"
+  echo dcbu - Dockerfile build "(docker build -t=NAME .)"
+  echo dcpu - Pull docker image
+  echo dccup - Docker-compose create and start containers
+  echo dccupd - Docker-compose start containers in background
+  echo "-----------------------------------------------------"
+  echo dri - Show all unused images
+  echo drim - Delete all unused images
+  echo dcrmp - Remove docker container by pattern
+  echo dcunct - Show unused containers
+  echo dcunrm - Delete unused containers
+  echo "-----------------------------------------------------"
+  echo dkall - kill all containers
+  echo dkillp - container kill by pattern
+  echo dstop - Stop all containers
+  echo "-----------------------------------------------------"
+}
+
+# Get latest container ID
+alias dl="docker ps -l -q"
+
+# Docker-compose
+alias dc="docker-compose"
+
+# Get images
+alias di="docker images"
+
+# Get container process
+alias dcs="docker ps"
+
+# Get process included stop container
+alias dca="docker ps -a"
+
+# Execute interactive container, e.g., $dex base /bin/bash
+alias dcx="docker exec -i -t"
+
+# Show all unused images
+alias dri="docker images | grep '<none>'"
+
+# Delete all unused images
+alias drim='docker rmi $( docker images -q -f dangling=true)'
+
+# get ip of container
+alias dcip='docker inspect -f "{{ .NetworkSettings.IPAddress }}"'
+
+
+function dcips() {
+    docker ps | while read line; do
+        if `echo $line | grep -q 'CONTAINER ID'`; then
+            echo -e "IP ADDRESS\t$line"
+        else
+            CID=$(echo $line | awk '{print $1}');
+            IP=$(docker inspect -f "{{ .NetworkSettings.IPAddress }}" $CID);
+            printf "${IP}\t${line}\n"
+        fi
+    done;
+}
+
+# inspect last container created
+alias doins="docker inspect $(docker ps -ql) | less"
+
+# Bash into running container
+dbash() { docker exec -it $(docker ps -aqf "name=$1") bash; }
+
+# Show unused containers
+alias dcunct="docker ps -q -f status=exited"
+
+# Delete unused containers
+alias dcunrm='docker rm $( docker ps -q -f status=exited)'
+
+# Stop all containers
+dstop() { docker stop $(docker ps -a -q); }
+
+# kill all containers
+alias dkall='docker kill $(docker ps -q)'
+
+# Dockerfile build, e.g., $dbu tcnksm/test 
+dcbu() { docker build -t=$1 .; }
+
+# Pull docker image
+alias dcpu="docker pull $1"
+
+# Docker-compose create and start containers
+alias dcup="docker-compose up"
+
+# Docker-compose create and start containers in background
+alias dcupd="docker-compose up -d"
+
+# Show all alias related docker
+dalias() { alias | grep 'docker' | sed "s/^\([^=]*\)=\(.*\)/\1 => \2/"| sed "s/['|\']//g" | sort; }
+
+# add variable DOCKER_ID with UID of most recent container
+alias docker-id='export DOCKER_ID=`docker ps -ql` && echo $DOCKER_ID'
+
+# following based on https://github.com/rcmorano/docker-baids/blob/master/00-docker-baids
+
+function dgrep() {
+    PATTERN=$@
+    docker ps -a | grep $PATTERN | grep -v ^CONTAINER
+}
+
+function dgrepr() {
+    PATTERN=$@
+    docker ps | grep $PATTERN | grep -v ^CONTAINER
+}
+
+function dkillp() {
+    PATTERN=$@
+    dgrepr $PATTERN | awk '{print $1}' | xargs -rI % bash -c 'echo $(docker kill %; echo "killed!");'
+}
+
+function docker-container-map-port() {
+    CONTAINER_ID=$1
+    SRC_PORT=$2
+    DST_PORT=$3
+    CONTAINER_IP=$(dip $CONTAINER_ID)
+    iptables -t nat -A  DOCKER -p tcp --dport $SRC_PORT -j DNAT --to-destination $CONTAINER_IP:$DST_PORT
+}
+
+function drmall-nonrun() {
+    docker ps -a | grep -v ^CONTAINER | grep Exit | awk '{print $1}' | xargs -rI % bash -c 'echo $(docker kill %; echo "killed!"); echo $(docker rm %; echo "removed!")' 
+}
+
+function dcrmp() {
+    PATTERN=$@
+    dkillp $PATTERN
+    dgrep $PATTERN | awk '{print $1}' | xargs -rI % bash -c 'echo $(docker rm %; echo "removed!")'
+}
+
+function docker-enter() {
+    NSENTER=/usr/local/bin/nsenter
+    if [ ! -e $NSENTER ]
+    then
+        docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+    fi
+
+    if [ -z "$1" ]; then
+        echo "usage: docker-enter <container id/name> <command to run default:sh>"
+    else
+        CONTAINER_ID=$(docker inspect --format {{.State.Pid}} "$1")
+        if [ -z "$CONTAINER_ID" ]; then
+           exit 1
+        fi
+        shift
+        "$NSENTER" --target $CONTAINER_ID --mount --uts --ipc --net --pid -- "$@"
+    fi
+}
+
+function digrep() {
+    PATTERN=$@
+    docker images | grep $PATTERN | grep -v ^REPOSITORY
+}
+
+function docker-image-remove-pattern() {
+    PATTERN=$@
+    digrep $PATTERN | awk '{print $1}' | xargs -rI % bash -c 'echo $(docker rmi %; echo "removed!");'
+}
