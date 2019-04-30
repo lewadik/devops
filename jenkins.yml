@@ -1,0 +1,11 @@
+- hosts: jenkins
+  remote_user: ansible
+  become: yes
+  become_method: sudo
+  vars:
+    jenkins_hostname: devme.club
+  roles:
+    - role: geerlingguy.java
+      become: yes
+    - role: geerlingguy.jenkins
+      become: yes
