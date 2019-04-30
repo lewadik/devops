@@ -1,0 +1,5 @@
+localhost
+[webservers]
+devme.club ansible_ssh_host=95.179.128.140
+[tomcatserver]
+devme2.xyz ansible_ssh_host=95.179.157.197

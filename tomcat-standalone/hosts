@@ -1,0 +1,2 @@
+[tomcat-servers]
+devme2.xyz ansible_ssh_host=95.179.157.197

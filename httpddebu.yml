@@ -1,0 +1,20 @@
+---
+  - name: Search String with lineinfile
+    hosts: all
+
+    tasks:
+      - name: "Searching for a String"
+        become: yes
+        become_user: root
+        tags: example1
+        lineinfile:
+          path: /etc/httpd/conf/httpd.conf
+          line: "LogLevel debug"
+          state: present
+        check_mode: yes
+        register: presence
+        failed_when: presence is changed 
+
+      - name: "sample task in case the String present in the file"
+        debug: msg="DEBUG is enabled in Apache Log file"
+        when: presence is not changed
